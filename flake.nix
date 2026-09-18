@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     systems.url = "github:nix-systems/default";
   };
@@ -11,10 +11,11 @@
 
       perSystem = { config, self', pkgs, lib, system, ... }: let
         nativeBuildInputs = with pkgs; [
-            bun
         ];
 
         buildInputs = with pkgs; [
+          wrangler
+          bun
         ];
       in {
         devShells.default = pkgs.mkShell {
