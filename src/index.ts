@@ -12,7 +12,7 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 const DISCORD_API = "https://discord.com/api/v10";
-const REDIRECT_URI = "https://amble-verifier.drtheo.workers.dev/callback";
+const REDIRECT_URI = "https://amble-verifier.amblelabs.workers.dev/callback";
 
 function generateState(): string {
   return crypto.randomUUID();
