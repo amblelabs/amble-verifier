@@ -12,7 +12,6 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 const DISCORD_API = "https://discord.com/api/v10";
-const REDIRECT_URI = "https://amble-verifier.drtheo.workers.dev/callback";
 
 function generateState(): string {
   return crypto.randomUUID();
@@ -31,7 +30,9 @@ app.get("/auth", async (c) => {
     setCookie(c, "redirect_port", port, { httpOnly: true, maxAge: 600 });
   }
 
-  const discordAuthUrl = `https://discord.com/oauth2/authorize?response_type=code&client_id=${c.env.DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=identify%20guilds.members.read&state=${state}`;
+  const url = new URL(c.req.url);
+
+  const discordAuthUrl = `https://discord.com/oauth2/authorize?response_type=code&client_id=${c.env.DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${url.origin}/callback`)}&scope=identify%20guilds.members.read&state=${state}`;
   return c.redirect(discordAuthUrl);
 });
 
@@ -48,6 +49,8 @@ app.get("/callback", async (c) => {
     return c.text("Missing authorization code", 400);
   }
 
+  const url = new URL(c.req.url);
+
   const tokenResponse = await fetch(`${DISCORD_API}/oauth2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -56,7 +59,7 @@ app.get("/callback", async (c) => {
       client_secret: c.env.DISCORD_CLIENT_SECRET,
       grant_type: "authorization_code",
       code: code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: `${url.origin}/callback`,
     }),
   });
 
@@ -121,7 +124,7 @@ app.get("/verify", async (c) => {
     const payload = await verify(token, c.env.JWT_SECRET, { alg: 'HS256' });
     return c.json({ valid: true, user: payload });
   } catch (e) {
-      
+
   console.error('Verification error:', e);
     return c.json({ valid: false, error: "Invalid token" }, 401);
   }
